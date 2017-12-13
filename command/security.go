@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"net/url"
 
 	"github.com/heroku/force/desktop"
 	. "github.com/heroku/force/error"
@@ -153,7 +154,7 @@ func parseProfileXML(profileName string, text string) Profile {
 		}
 	}
 
-	//	fmt.Println(p)
+	// fmt.Println(p)
 
 	return *p
 }
@@ -245,24 +246,27 @@ Examples:
   force security Case
   force security Countact -e
   force security Account -o=Account.html
+  force security Opportunity -p "ourcompany_profile"
 
 Query Options
-  --execute, -e      After output html, open it.
-  --output, -o   Specify output filepath. it can use with -e option.
-  --stdout, -s   Output to Stdout. it prior other options.
-
+  -e   After output html, open it.
+  -o   Specify output filepath. it can use with -e option.
+  -s   Output to Stdout. it prior other options.
+  -p <profilename prefix>   filter with profilename prefix
 `,
 }
 
 var (
     outStdout bool
     afterExecute bool
+    profilePrefix string
 	outFilepath string
 )
 
 func init() {
 	cmdSecurity.Flag.BoolVar(&outStdout, "s", false, "output to Stdout")
 	cmdSecurity.Flag.StringVar(&outFilepath, "o", "security.html", "Specify ouput filepath")
+	cmdSecurity.Flag.StringVar(&profilePrefix, "p", "", "Specify Profile name prefix")
 	cmdSecurity.Flag.BoolVar(&afterExecute, "e", false, "After generate file, Open it.")
 	if(outStdout){
 	   afterExecute = false
@@ -301,7 +305,9 @@ func runSecurity(cmd *Command, args []string) {
 	for name, data := range files {
 		if strings.HasPrefix(name, "profiles/") {
 			profileName := strings.TrimSuffix(strings.TrimPrefix(name, "profiles/"), ".profile")
-			profiles.PushBack(parseProfileXML(profileName, string(data)))
+			if(strings.HasPrefix(profileName, profilePrefix)){
+				profiles.PushBack(parseProfileXML(profileName, string(data)))
+			}
 		} else if strings.HasPrefix(name, "objects/") {
 			objectName := strings.TrimSuffix(strings.TrimPrefix(name, "objects/"), ".object")
 			if objectName == args[0] {
@@ -344,7 +350,8 @@ func runSecurity(cmd *Command, args []string) {
 				continue
 			}
 			theProfile := v.Value.(Profile)
-			profileNames += theProfile.name + "<br/>"
+			decodedProfileName, _ := url.QueryUnescape(theProfile.name)
+			profileNames += decodedProfileName + "<br/>"
 		}
 		HTMLoutput += "<td>" + strings.Replace(profileNames, " ", "&nbsp;", -1) + "</td>"
 	}
