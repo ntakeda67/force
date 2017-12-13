@@ -253,6 +253,7 @@ Query Options
   -o   Specify output filepath. it can use with -e option.
   -s   Output to Stdout. it prior other options.
   -p <profilename prefix>   filter with profilename prefix
+  -d   divide each profile column (not grouping same OLS/FLS profiles)
 `,
 }
 
@@ -261,6 +262,7 @@ var (
     afterExecute bool
     profilePrefix string
 	outFilepath string
+	divideEachProfiles bool
 )
 
 func init() {
@@ -268,6 +270,7 @@ func init() {
 	cmdSecurity.Flag.StringVar(&outFilepath, "o", "security.html", "Specify ouput filepath")
 	cmdSecurity.Flag.StringVar(&profilePrefix, "p", "", "Specify Profile name prefix")
 	cmdSecurity.Flag.BoolVar(&afterExecute, "e", false, "After generate file, Open it.")
+	cmdSecurity.Flag.BoolVar(&divideEachProfiles, "d", false, "divide each profile columns.")
 	if(outStdout){
 	   afterExecute = false
 	}
@@ -325,6 +328,9 @@ func runSecurity(cmd *Command, args []string) {
 	for e := profiles.Front(); e != nil; e = e.Next() {
 		p = e.Value.(Profile)
 		key := theObject.getProfileFootprint(p)
+		if(divideEachProfiles) {
+			key = p.name
+		}
 		tmpList, OK := allProfiles[key]
 		if !OK {
 			var tmpList2 list.List
