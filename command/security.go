@@ -235,7 +235,7 @@ func parseCustomObjectXML(objectName string, text string) CustomObject {
 
 var cmdSecurity = &Command{
 	Run:   runSecurity,
-	Usage: "security [SObject]",
+	Usage: "security [SObject] [-o=<filepath>] [-e]",
 	Short: "Displays the OLS and FLS for a given SObject",
 	Long: `
 Displays the OLS and FLS for a given SObject
@@ -243,8 +243,32 @@ Displays the OLS and FLS for a given SObject
 Examples:
 
   force security Case
+  force security Countact -e
+  force security Account -o=Account.html
+
+Query Options
+  --execute, -e      After output html, open it.
+  --output, -o   Specify output filepath. it can use with -e option.
+  --stdout, -s   Output to Stdout. it prior other options.
+
 `,
 }
+
+var (
+    outStdout bool
+    afterExecute bool
+	outFilepath string
+)
+
+func init() {
+	cmdSecurity.Flag.BoolVar(&outStdout, "s", false, "output to Stdout")
+	cmdSecurity.Flag.StringVar(&outFilepath, "o", "security.html", "Specify ouput filepath")
+	cmdSecurity.Flag.BoolVar(&afterExecute, "e", false, "After generate file, Open it.")
+	if(outStdout){
+	   afterExecute = false
+	}
+}
+
 
 func runSecurity(cmd *Command, args []string) {
 	wd, _ := os.Getwd()
@@ -360,9 +384,13 @@ func runSecurity(cmd *Command, args []string) {
 	HTMLoutput += "</table></body></html>"
 
 	// Last step: write the file on disk and display it inside a Web browser
-	if err := ioutil.WriteFile(filepath.Join(root, "security.html"), []byte(HTMLoutput), 0644); err != nil {
+	if (outStdout) {
+		fmt.Println(HTMLoutput)
+	}
+	if err := ioutil.WriteFile(filepath.Join(root, outFilepath), []byte(HTMLoutput), 0644); err != nil {
 		ErrorAndExit(err.Error())
 	}
-
-	desktop.Open(filepath.Join(root, "security.html"))
+	if (afterExecute){
+	    desktop.Open(filepath.Join(root, outFilepath))
+	}
 }

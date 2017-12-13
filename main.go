@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/heroku/force/command"
+	"github.com/ntakeda67/force/command"
 	. "github.com/heroku/force/error"
 	. "github.com/heroku/force/lib"
 )
